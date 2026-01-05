@@ -1,18 +1,34 @@
-name: Build and Release
+name: Build and Release Magisk Module
+
 on:
   push:
-    tags:
-      - 'v*' # Сработает, когда вы создадите тег версии (например v1.0)
+    branches:
+      - main  # Проверь, что здесь именно main, как в твоем репо
+  workflow_dispatch: # Позволит запустить сборку вручную кнопкой
+
+permissions:
+  contents: write  # Обязательно для создания релизов
 
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-      - name: Zip Module
-        run: zip -r Heroku_Magisk.zip . -x ".git*" ".github*"
-      - name: Release
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Create Magisk Module Zip
+        run: |
+          # Убираем Windows-окончания строк, если они появились
+          find . -name "*.sh" -exec sed -i 's/\r$//' {} +
+          find . -name "module.prop" -exec sed -i 's/\r$//' {} +
+          # Собираем архив
+          zip -r9 "Heroku_Module.zip" . -x ".git*" ".github*" "README.md"
+
+      - name: Upload to Release
         uses: softprops/action-gh-release@v1
         with:
-          files: Heroku_Magisk.zip
-          
+          tag_name: latest
+          name: Latest Stable Build
+          files: Heroku_Module.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
