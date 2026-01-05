@@ -1,34 +1,33 @@
-name: Build and Release Magisk Module
+name: Build and Release
 
 on:
   push:
-    branches:
-      - main  # Проверь, что здесь именно main, как в твоем репо
-  workflow_dispatch: # Позволит запустить сборку вручную кнопкой
+    branches: [ main ]
+  workflow_dispatch:
 
 permissions:
-  contents: write  # Обязательно для создания релизов
+  contents: write
 
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
+      - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Create Magisk Module Zip
+      - name: Prepare Files
         run: |
-          # Убираем Windows-окончания строк, если они появились
+          # Убираем Windows-окончания строк (CRLF -> LF)
           find . -name "*.sh" -exec sed -i 's/\r$//' {} +
           find . -name "module.prop" -exec sed -i 's/\r$//' {} +
-          # Собираем архив
+          # Создаем ZIP
           zip -r9 "Heroku_Module.zip" . -x ".git*" ".github*" "README.md"
 
-      - name: Upload to Release
-        uses: softprops/action-gh-release@v1
+      - name: Update Release
+        uses: itemprop/action-gh-release@v1
         with:
           tag_name: latest
-          name: Latest Stable Build
+          name: Latest Build
           files: Heroku_Module.zip
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
