@@ -15,32 +15,46 @@ MODDIR="/data/adb/modules/heroku_module"
 PID_FILE="$MODDIR/bot.pid"
 BOT_DIR="/home/heroku"
 
-# 1. МОНТИРОВАНИЕ
+# 1. МОНТИРОВАНИЕ (УБРАЛИ SDCARD)
 [ ! -d "$ROOTFS/proc/1" ] && {
-    ui_print "- Монтирование систем..."
+    ui_print "- Подготовка системных разделов..."
     mount -o bind /dev $ROOTFS/dev
     mount -t proc proc $ROOTFS/proc
     mount -t sysfs sys $ROOTFS/sys
-    mount -o bind /sdcard $ROOTFS/sdcard
+    # Монтирование сим-карты/sdcard удалено по твоей просьбе
 }
 
-# 2. ПРОВЕРКА УСТАНОВКИ БОТА
-# Если папки бота нет — запускаем установку, игнорируя флаги
+# 2. ПРОВЕРКА И УСТАНОВКА БОТА
 if [ ! -d "$ROOTFS$BOT_DIR" ]; then
-    ui_print "🚀 Бот не найден. Начинаем установку..."
+    ui_print "🚀 Начинаем установку юзербота..."
     
-    cat <<EOF > $ROOTFS/tmp/setup.sh
-#!/bin/bash
-git clone https://github.com/coddrago/Heroku $BOT_DIR
-cd $BOT_DIR
-pip install --upgrade pip
-pip install -r requirements.txt
-EOF
-    chmod +x $ROOTFS/tmp/setup.sh
-    chroot $ROOTFS /bin/bash /tmp/setup.sh
+    # Запускаем клонирование в фоне для анимации
+    chroot $ROOTFS /usr/bin/git clone https://github.com/coddrago/Heroku $BOT_DIR >/dev/null 2>&1 &
+    GIT_PID=$!
+
+    # Анимация "Плеер"
+    symbols="/ - \ |"
+    while kill -0 $GIT_PID 2>/dev/null; do
+        for s in $symbols; do
+            printf "\r  [ %s ] Скачивание файлов репозитория..." "$s"
+            sleep 0.2
+        done
+    done
+    ui_print ""
+
+    ui_print "📦 Установка зависимостей Python..."
+    chroot $ROOTFS /bin/bash -c "cd $BOT_DIR && pip install --upgrade pip && pip install -r requirements.txt" >/dev/null 2>&1 &
+    PIP_PID=$!
+
+    while kill -0 $PIP_PID 2>/dev/null; do
+        for s in $symbols; do
+            printf "\r  [ %s ] Настройка библиотек (это долго)..." "$s"
+            sleep 0.2
+        done
+    done
+    ui_print ""
     
     ui_print "✅ Установка завершена!"
-    ui_print "Нажми Action еще раз для запуска."
     exit 0
 fi
 
@@ -51,21 +65,21 @@ if [ -f "$PID_FILE" ]; then
         ui_print "⏹ Останавливаем бота (PID: $PID)..."
         kill -9 "$PID" 2>/dev/null
         rm "$PID_FILE"
-        ui_print "✅ Бот остановлен."
+        ui_print "✅ Бот успешно выключен."
     else
-        ui_print "⚠️ Бот не активен, чистим PID..."
+        ui_print "⚠️ Процесс не найден, чистим PID..."
         rm "$PID_FILE"
     fi
 else
     ui_print "⚙️ Запуск юзербота..."
-    # Проверяем запуск и записываем PID
+    # Запуск бота в фоне
     chroot $ROOTFS /bin/bash -c "cd $BOT_DIR && nohup python3 main.py > bot.log 2>&1 & echo \$!" > "$PID_FILE"
     
     sleep 2
     NEW_PID=$(cat "$PID_FILE")
     if kill -0 "$NEW_PID" 2>/dev/null; then
-        ui_print "🌐 Бот запущен! (PID: $NEW_PID)"
+        ui_print "🌐 Юзербот запущен! (PID: $NEW_PID)"
     else
-        ui_print "❌ Ошибка запуска! Проверь логи в $BOT_DIR/bot.log"
+        ui_print "❌ Ошибка запуска! Проверь /home/heroku/bot.log"
     fi
 fi
