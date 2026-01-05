@@ -29,5 +29,8 @@ jobs:
           tag_name: latest
           name: Latest Build
           files: Heroku_Module.zip
+          # Эти две строки заставят GitHub обновить существующий релиз
+          prerelease: false
+          make_latest: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
