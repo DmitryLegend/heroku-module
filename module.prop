@@ -2,5 +2,5 @@ id=heroku_module
 name=Heroku Userbot Host
 version=v1.0
 versionCode=1
-author=Dmitryi_Legend
-description=Hosting Heroku userbot inside Alpine Linux Chroot. Use Action button to Install/Start/Stop.
+author=@DmitryLegend
+description=Запуск Heroku Юзербота через Alpine Linux прямо в Magisk.
