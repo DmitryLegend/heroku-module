@@ -24,7 +24,7 @@ jobs:
           zip -r9 "Heroku_Module.zip" . -x ".git*" ".github*" "README.md"
 
       - name: Update Release
-        uses: itemprop/action-gh-release@v1
+        uses: softprops/action-gh-release@v1
         with:
           tag_name: latest
           name: Latest Build
