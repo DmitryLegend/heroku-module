@@ -1,6 +1,6 @@
-id=heroku_userbot
-name=Heroku Userbot Manager
+id=heroku_module
+name=Heroku Userbot Host
 version=v1.0
 versionCode=1
-author=YourName
-description=Авто-установка Alpine Linux и управление юзерботом через кнопку Action.
+author=Dmitryi_Legend
+description=Hosting Heroku userbot inside Alpine Linux Chroot. Use Action button to Install/Start/Stop.
