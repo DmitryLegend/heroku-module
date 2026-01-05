@@ -1,10 +1,5 @@
 #!/system/bin/sh
 
-# Информация о модуле
-MODID="heroku_module"
-MODNAME="Heroku Userbot Host"
-MODAUTH="@DmitryLegend" # Ник обновлен
-
 ROOTFS="/data/local/linux_bot"
 URL="https://dl-cdn.alpinelinux.org/alpine/v3.18/releases/aarch64/alpine-minirootfs-3.18.4-aarch64.tar.gz"
 ARCHIVE="$MODPATH/alpine.tar.gz"
