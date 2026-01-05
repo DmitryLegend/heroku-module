@@ -1,27 +1,24 @@
 #!/system/bin/sh
-exec 2>&1  # Теперь все ошибки будут видны на экране!
 
-echo "--- ЗАПУСК МОДУЛЯ ---"
-# остальной код...
+# Перенаправляем все ошибки в стандартный вывод, чтобы они отображались в Magisk
+exec 2>&1
 
-# Обязательная функция для вывода текста в терминал Action
+# Функция для вывода текста (в Action используется обычный echo)
 ui_print() {
   echo "$1"
 }
 
 ui_print "*******************************"
-ui_print "   Heroku Manager Debug Mode   "
+ui_print "   Heroku Userbot Manager      "
 ui_print "*******************************"
 
 ROOTFS="/data/local/linux_bot"
 MODDIR="/data/adb/modules/heroku_module"
 PID_FILE="$MODDIR/bot.pid"
 
-ui_print "- Проверка окружения..."
-
-# Проверка наличия папки Linux
+# 1. ПРОВЕРКА ОКРУЖЕНИЯ
 if [ ! -d "$ROOTFS" ]; then
-    ui_print "❌ Ошибка: Папка Linux не найдена!"
+    ui_print "❌ Ошибка: Alpine Linux не найден!"
     ui_print "Попробуйте переустановить модуль."
     exit 1
 fi
@@ -35,22 +32,33 @@ fi
     mount -o bind /sdcard $ROOTFS/sdcard
 }
 
-# ЛОГИКА УСТАНОВКИ / ЗАПУСКА
+# 2. ПЕРВАЯ УСТАНОВКА HEROKU
 if [ -f "$MODDIR/first_run" ]; then
-    ui_print "🚀 Начинаем первичную установку..."
-    # Твой код установки здесь...
-    # (Для краткости пропустим, используй код из прошлых ответов)
+    ui_print "🚀 Начинаем установку Heroku..."
+    
+    # Скрипт установки внутри Linux
+    cat <<EOF > $ROOTFS/tmp/setup.sh
+#!/bin/bash
+if [ ! -d "/home/heroku" ]; then
+    git clone https://github.com/coddrago/Heroku /home/heroku
+fi
+cd /home/heroku
+pip install --upgrade pip
+pip install -r requirements.txt
+EOF
+    chmod +x $ROOTFS/tmp/setup.sh
+    
+    # Запуск установки через chroot
+    chroot $ROOTFS /bin/bash /tmp/setup.sh
+    
     rm "$MODDIR/first_run"
     ui_print "✅ Установка завершена!"
-else
-    if [ -f "$PID_FILE" ]; then
-        ui_print "⏹ Останавливаем бота..."
-        kill -9 $(cat "$PID_FILE") 2>/dev/null
-        rm "$PID_FILE"
-        ui_print "Бот выключен."
-    else
-        ui_print "⚙️ Запуск бота в фоне..."
-        chroot $ROOTFS /bin/bash -c "cd /home/heroku && nohup python3 main.py > bot.log 2>&1 & echo \$!" > "$PID_FILE"
-        ui_print "🌐 Бот запущен!"
-    fi
+    ui_print "Нажмите 'Action' еще раз для запуска."
+    exit 0
 fi
+
+# 3. ЛОГИКА ВКЛЮЧЕНИЯ / ВЫКЛЮЧЕНИЯ (ПЕРЕКЛЮЧАТЕЛЬ)
+if [ -f "$PID_FILE" ]; then
+    PID=$(cat "$PID_FILE")
+    # Проверяем, жив ли процесс
+    if kill -0 "$PID" 2>/dev
