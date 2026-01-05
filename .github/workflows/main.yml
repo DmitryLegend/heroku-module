@@ -1,8 +1,9 @@
-name: Build and Release
+name: Build and Release Magisk Module
 
 on:
   push:
-    branches: [ main ]
+    branches:
+      - main
   workflow_dispatch:
 
 permissions:
@@ -12,24 +13,26 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
+      - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Prepare Files
+      - name: Fix Line Endings and Build Zip
         run: |
-          # Убираем Windows-окончания строк (CRLF -> LF)
-          find . -name "*.sh" -exec sed -i 's/\r$//' {} +
-          find . -name "module.prop" -exec sed -i 's/\r$//' {} +
-          # Создаем ZIP
+          # Принудительно исправляем формат строк на Unix (LF), чтобы не было черного экрана
+          find . -type f -name "*.sh" -exec sed -i 's/\r$//' {} +
+          find . -type f -name "module.prop" -exec sed -i 's/\r$//' {} +
+          
+          # Собираем архив модуля
           zip -r9 "Heroku_Module.zip" . -x ".git*" ".github*" "README.md"
 
-      - name: Update Release
+      - name: Update Latest Release
         uses: softprops/action-gh-release@v1
         with:
           tag_name: latest
-          name: Latest Build
+          name: "Latest Stable Build"
+          body: "Автоматическая сборка модуля. Обновлено: ${{ github.event.head_commit.timestamp }}"
           files: Heroku_Module.zip
-          # Эти две строки заставят GitHub обновить существующий релиз
+          # Эти параметры заставляют GitHub обновлять файл в существующем релизе
           prerelease: false
           make_latest: true
         env:
