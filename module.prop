@@ -1,0 +1,6 @@
+id=heroku_userbot
+name=Heroku Userbot Manager
+version=v1.0
+versionCode=1
+author=YourName
+description=Авто-установка Alpine Linux и управление юзерботом через кнопку Action.
