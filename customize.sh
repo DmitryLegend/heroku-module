@@ -1,22 +1,39 @@
 #!/system/bin/sh
 
+# Определяем пути
 ROOTFS="/data/local/linux_bot"
-# Ссылка на минимальный образ Alpine для архитектуры процессора (arm64)
+MODDIR="/data/adb/modules/heroku_module"
 URL="https://dl-cdn.alpinelinux.org/alpine/v3.18/releases/aarch64/alpine-minirootfs-3.18.4-aarch64.tar.gz"
 
-ui_print "- Создание окружения..."
+ui_print "*******************************"
+ui_print "   Heroku Userbot Installer    "
+ui_print "*******************************"
+
+# Создаем папку, если её нет
 mkdir -p $ROOTFS
 
-ui_print "- Скачивание Alpine Linux (около 5МБ)..."
-curl -L $URL | tar -xz -C $ROOTFS
+ui_print "- Скачивание Alpine Linux..."
+# Используем curl с выводом прогресса в консоль (если Magisk поддерживает вывод)
+if curl -L $URL | tar -xz -C $ROOTFS; then
+    ui_print "✅ Образ успешно загружен и распакован."
+else
+    ui_print "❌ Ошибка при скачивании! Проверьте интернет."
+    abort
+fi
 
-ui_print "- Базовая настройка сети..."
+ui_print "- Настройка DNS и репозиториев..."
 echo "nameserver 8.8.8.8" > $ROOTFS/etc/resolv.conf
 
-# Установка необходимых пакетов внутри нашего линукса
-ui_print "- Установка Python и Git внутри Alpine..."
-chroot $ROOTFS /sbin/apk add --no-cache python3 py3-pip git bash
+ui_print "- Установка системных пакетов (Python, Git)..."
+# Установка пакетов внутри Chroot
+chroot $ROOTFS /sbin/apk add --no-cache python3 py3-pip git bash curl
 
-# Создаем "метку" для первого запуска
+# Создаем флаг первого запуска
 touch $MODPATH/first_run
-ui_print "- Готово! После перезагрузки нажмите кнопку 'Action' для установки бота."
+
+ui_print "-------------------------------"
+ui_print " ПЕРЕЗАГРУЗИТЕ ТЕЛЕФОН! "
+ui_print " После загрузки нажмите 'Action' "
+ui_print " в меню модулей Magisk. "
+ui_print "------------------------
+-------"
