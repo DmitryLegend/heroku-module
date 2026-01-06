@@ -7,8 +7,6 @@ ROOTFS="/data/local/linux_bot"
 MODDIR="/data/adb/modules/heroku_module"
 PID_FILE="$MODDIR/bot.pid"
 BOT_DIR="/home/heroku"
-# Ссылка, которую нужно открыть
-URL_TO_OPEN="https://github.com/coddrago/Heroku"
 
 # 1. МОНТИРОВАНИЕ
 [ ! -d "$ROOTFS/proc/1" ] && {
@@ -23,25 +21,37 @@ if [ ! -f "$ROOTFS$BOT_DIR/main.py" ]; then
     ui_print "🚀 ЗАПУСК ПЕРВОЙ АКТИВАЦИИ Heroku"
     ui_print "----------------------------------------"
     
+    # Очистка перед установкой
     rm -rf "$ROOTFS$BOT_DIR"
     mkdir -p "$ROOTFS$BOT_DIR"
     
-    ui_print "- Шаг 1/2 Клонирование репозитория Heroku"
+    ui_print "- Шаг 1/2 Клонирование репозитория"
     chroot $ROOTFS /usr/bin/git clone https://github.com/coddrago/Heroku $BOT_DIR
     
     ui_print "----------------------------------------"
-    ui_print "- Шаг 2/2 Установка зависимостей Python"
-    chroot $ROOTFS /bin/bash -c "cd $BOT_DIR && python3 -m pip install --upgrade pip && python3 -m pip install -r requirements.txt"
+    ui_print "- Шаг 2/2 Установка и поиск ссылки активации"
     
-    ui_print "----------------------------------------"
+    # Запускаем установку и ловим ссылку
+    chroot $ROOTFS /bin/bash -c "cd $BOT_DIR && python3 -m pip install -r requirements.txt"
+    
+    ui_print "⌛ Ожидание генерации ссылки..."
+    
+    # Запускаем скрипт и ищем в его выводе URL
+    # Как только появится строка с http, она будет передана в браузер
+    chroot $ROOTFS /bin/bash -c "cd $BOT_DIR && python3 main.py" | while read -r line; do
+        echo "$line"
+        case "$line" in
+            *http*) 
+                URL=$(echo "$line" | grep -oE "https?://[a-zA-Z0-9./?=_-]+")
+                if [ ! -z "$URL" ]; then
+                    ui_print "🌐 Ссылка найдена! Открываем..."
+                    am start -a android.intent.action.VIEW -d "$URL" >/dev/null 2>&1
+                fi
+                ;;
+        esac
+    done
+    
     ui_print " ✅ Активация завершена "
-    
-    # АВТО-ОТКРЫТИЕ ССЫЛКИ
-    ui_print "🌐 Открываем браузер модуля..."
-    # Используем Android Activity Manager для запуска браузера по умолчанию
-    am start -a android.intent.action.VIEW -d "$URL_TO_OPEN" >/dev/null 2>&1
-    
-    ui_print " Нажми Action еще раз для запуска "
     exit 0
 fi
 
