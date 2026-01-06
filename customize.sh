@@ -4,14 +4,9 @@
 install_step() {
     local message="$1"
     local command="$2"
-    
     ui_print "  [..] $message"
-    
-    # Запускаем команду в фоне
     eval "$command" >/dev/null 2>&1 &
     local PID=$!
-    
-    # Анимация ожидания
     local delay=0.1
     local spinstr='|/-\'
     while [ "$(ps -p $PID -o comm=)" ]; do
@@ -21,8 +16,6 @@ install_step() {
         sleep $delay
         printf "\b\b\b\b\b"
     done
-    
-    # Очистка и вывод результата
     printf "  [OK]\n"
 }
 
@@ -34,7 +27,6 @@ ui_print " "
 ui_print "  📦 ПОДГОТОВКА ОКРУЖЕНИЯ HEROKU"
 ui_print "  =============================="
 
-# Этапы установки
 install_step "Загрузка ядра Alpine Linux" "curl -L -s -o '$ARCHIVE' '$URL'"
 install_step "Распаковка системы" "mkdir -p $ROOTFS && tar -xzf '$ARCHIVE' -C $ROOTFS"
 rm "$ARCHIVE"
@@ -42,19 +34,18 @@ rm "$ARCHIVE"
 ui_print "  📥 УСТАНОВКА КОМПОНЕНТОВ:"
 echo "nameserver 8.8.8.8" > $ROOTFS/etc/resolv.conf
 
-# Построчная установка для наглядности
-install_step "Установка интерпретатора Python 3" "chroot $ROOTFS /sbin/apk add --no-cache -q python3 py3-pip"
-install_step "Установка системы контроля версий Git" "chroot $ROOTFS /sbin/apk add --no-cache -q git"
-install_step "Установка сетевых утилит (Curl/Bash)" "chroot $ROOTFS /sbin/apk add --no-cache -q curl bash"
-install_step "Подготовка компилятора GCC" "chroot $ROOTFS /sbin/apk add --no-cache -q build-base"
-install_step "Загрузка системных заголовков Linux" "chroot $ROOTFS /sbin/apk add --no-cache -q python3-dev musl-dev linux-headers libffi-dev"
+# Устанавливаем готовые бинарные пакеты py3-psutil и зависимости для tgcrypto
+install_step "Инсталляция Python 3 & Pip" "chroot $ROOTFS /sbin/apk add --no-cache -q python3 py3-pip"
+install_step "Инсталляция Git & Bash" "chroot $ROOTFS /sbin/apk add --no-cache -q git bash curl"
+install_step "Инсталляция готового модуля PSUTIL" "chroot $ROOTFS /sbin/apk add --no-cache -q py3-psutil"
+install_step "Инсталляция библиотек сборки (GCC)" "chroot $ROOTFS /sbin/apk add --no-cache -q build-base python3-dev musl-dev linux-headers libffi-dev"
 
 ui_print "  ⚙️ НАСТРОЙКА КОНФИГУРАЦИИ:"
 install_step "Применение прав доступа" "set_perm_recursive $MODPATH 0 0 0755 0755 && set_perm_recursive $ROOTFS 0 0 0755 0755"
 
 ui_print "  =============================="
-ui_print "  ✅ УСТАНОВКА ЗАВЕРШЕНА УСПЕШНО"
+ui_print "  ✅ УСТАНОВКА ЗАВЕРШЕНА"
 ui_print "  🚀 ПЕРЕЗАГРУЗИТЕ ТЕЛЕФОН"
-ui_print " "
+ui_print "  =============================="
 
 sleep 2
