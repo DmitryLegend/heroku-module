@@ -20,25 +20,25 @@ if [ ! -f "$ROOTFS$BOT_DIR/main.py" ]; then
     rm -rf "$ROOTFS$BOT_DIR"
     mkdir -p "$ROOTFS$BOT_DIR"
     
-    ui_print "- Клонирование..."
+    ui_print "- Шаг 1/2 Клонирование..."
     chroot $ROOTFS /usr/bin/git clone https://github.com/coddrago/Heroku $BOT_DIR
     
-    ui_print "- Установка зависимостей (сборка может занять 2-3 мин)..."
-    # Теперь gcc есть, библиотеки соберутся
-    chroot $ROOTFS /bin/bash -c "cd $BOT_DIR && /usr/bin/python3 -m pip install --upgrade pip && /usr/bin/python3 -m pip install -r requirements.txt"
+    ui_print "- Шаг 2/2 Установка зависимостей (ждем сборку)..."
+    # Показываем процесс установки библиотек
+    chroot $ROOTFS /bin/bash -c "cd $BOT_DIR && /usr/bin/python3 -m pip install -r requirements.txt"
     
-    ui_print "⌛ Запуск для получения ссылки..."
+    ui_print "⌛ Запуск и поиск ссылки..."
     
-    # Запускаем и ловим ссылку во всех потоках вывода
+    # Запуск с перехватом ссылки и выводом в консоль
     chroot $ROOTFS /bin/bash -c "cd $BOT_DIR && /usr/bin/python3 main.py" 2>&1 | while read -r line; do
         echo "$line"
         case "$line" in
             *http*) 
                 URL=$(echo "$line" | grep -oE "https?://[a-zA-Z0-9./?=_-]+")
                 if [ ! -z "$URL" ]; then
-                    ui_print "🌐 Ссылка найдена! Открываю в браузере..."
+                    ui_print "🌐 Ссылка найдена! Открываю..."
                     am start -a android.intent.action.VIEW -d "$URL" >/dev/null 2>&1
-                    break # Выходим из цикла после первой ссылки
+                    break
                 fi
                 ;;
         esac
@@ -47,7 +47,7 @@ if [ ! -f "$ROOTFS$BOT_DIR/main.py" ]; then
     exit 0
 fi
 
-# 3. Обычный запуск
+# 3. Управление
 if [ -f "$PID_FILE" ]; then
     PID=$(cat "$PID_FILE")
     ui_print "⏹ Останавливаем Heroku"
