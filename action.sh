@@ -21,7 +21,7 @@ if [ ! -f "$ROOTFS$BOT_DIR/main.py" ]; then
     ui_print "🚀 ЗАПУСК ПЕРВОЙ АКТИВАЦИИ Heroku"
     ui_print "----------------------------------------"
     
-    # Очистка перед установкой
+    # Очистка папки для чистого клонирования
     rm -rf "$ROOTFS$BOT_DIR"
     mkdir -p "$ROOTFS$BOT_DIR"
     
@@ -30,21 +30,22 @@ if [ ! -f "$ROOTFS$BOT_DIR/main.py" ]; then
     
     ui_print "----------------------------------------"
     ui_print "- Шаг 2/2 Установка и поиск ссылки активации"
-    
-    # Запускаем установку и ловим ссылку
-    chroot $ROOTFS /bin/bash -c "cd $BOT_DIR && python3 -m pip install -r requirements.txt"
+
+    # Используем полный путь /usr/bin/python3, чтобы избежать ошибки "not found"
+    chroot $ROOTFS /bin/bash -c "cd $BOT_DIR && /usr/bin/python3 -m pip install -r requirements.txt"
     
     ui_print "⌛ Ожидание генерации ссылки..."
     
-    # Запускаем скрипт и ищем в его выводе URL
-    # Как только появится строка с http, она будет передана в браузер
-    chroot $ROOTFS /bin/bash -c "cd $BOT_DIR && python3 main.py" | while read -r line; do
+    # Запускаем скрипт и ищем URL в реальном времени
+    chroot $ROOTFS /bin/bash -c "cd $BOT_DIR && /usr/bin/python3 main.py" | while read -r line; do
         echo "$line"
+        # Проверяем строку на наличие http/https
         case "$line" in
             *http*) 
                 URL=$(echo "$line" | grep -oE "https?://[a-zA-Z0-9./?=_-]+")
                 if [ ! -z "$URL" ]; then
                     ui_print "🌐 Ссылка найдена! Открываем..."
+                    # Открываем через Android Activity Manager
                     am start -a android.intent.action.VIEW -d "$URL" >/dev/null 2>&1
                 fi
                 ;;
@@ -64,7 +65,8 @@ if [ -f "$PID_FILE" ]; then
     ui_print "✅ Выключено"
 else
     ui_print "⚙️ Запуск Heroku"
-    chroot $ROOTFS /bin/bash -c "cd $BOT_DIR && nohup python3 main.py > bot.log 2>&1 & echo \$!" > "$PID_FILE"
+    # Запуск в фоне с полным путем к python3
+    chroot $ROOTFS /bin/bash -c "cd $BOT_DIR && nohup /usr/bin/python3 main.py > bot.log 2>&1 & echo \$!" > "$PID_FILE"
     
     sleep 2
     ui_print "🌐 Heroku запущен PID $(cat $PID_FILE)"
