@@ -1,7 +1,6 @@
 # 🌌 Heroku Userbot Host for Magisk
 
 <p align="center">
-<p align="center">
   <a href="https://github.com/DmitryLegend/heroku-module/releases/tag/latest">
     <img src="https://img.shields.io/badge/DOWNLOAD-LATEST_RELEASE-9d4edd?style=for-the-badge&logo=github&logoColor=white">
   </a>
