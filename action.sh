@@ -14,21 +14,21 @@ BOT_DIR="/home/heroku"
     mount -t sysfs sys $ROOTFS/sys
 }
 
-# 2. Активация (если нет main.py)
+# 2. Первая активация
 if [ ! -f "$ROOTFS$BOT_DIR/main.py" ]; then
-    ui_print "🚀 ЗАПУСК АКТИВАЦИИ"
+    ui_print "🚀 АКТИВАЦИЯ"
     rm -rf "$ROOTFS$BOT_DIR"
     mkdir -p "$ROOTFS$BOT_DIR"
     
-    ui_print "- Клонирование репозитория..."
+    ui_print "- Скачивание бота..."
     chroot $ROOTFS /usr/bin/git clone -q https://github.com/coddrago/Heroku $BOT_DIR
     
-    ui_print "- Установка библиотек (может занять время)..."
-    # Ставим зависимости без лишнего вывода
+    ui_print "- Сборка библиотек (может занять 2-3 мин)..."
+    # Ставим зависимости. [span_5](start_span)Теперь GCC есть, и psutil соберется[span_5](end_span)
     chroot $ROOTFS /bin/bash -c "cd $BOT_DIR && /usr/bin/python3 -m pip install -q --no-cache-dir -r requirements.txt"
     
-    ui_print "- Запуск для получения ссылки..."
-    # Запускаем и ищем URL. am start отправит его в браузер Android
+    ui_print "- Поиск ссылки авторизации..."
+    # [span_6](start_span)Запускаем и ловим URL[span_6](end_span)
     chroot $ROOTFS /bin/bash -c "cd $BOT_DIR && /usr/bin/python3 main.py" 2>&1 | while read -r line; do
         case "$line" in
             *http*) 
@@ -41,17 +41,16 @@ if [ ! -f "$ROOTFS$BOT_DIR/main.py" ]; then
                 ;;
         esac
     done
-    ui_print "✅ Установка завершена. Нажми Action для старта."
+    ui_print "✅ Готово. Нажми Action для запуска."
     exit 0
 fi
 
-# 3. Управление (Старт/Стоп)
+# 3. Старт / Стоп
 if [ -f "$PID_FILE" ]; then
     PID=$(cat "$PID_FILE")
-    ui_print "⏹ Остановка..."
+    ui_print "⏹ Останавливаем..."
     kill -9 "$PID" 2>/dev/null
     rm "$PID_FILE"
-    ui_print "✅ Бот выключен"
 else
     ui_print "⚙️ Запуск Heroku..."
     chroot $ROOTFS /bin/bash -c "cd $BOT_DIR && nohup /usr/bin/python3 main.py > bot.log 2>&1 & echo \$!" > "$PID_FILE"
