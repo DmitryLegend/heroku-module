@@ -1,15 +1,11 @@
 # 🌌 Heroku Userbot Host for Magisk
 
 <p align="center">
-# 🌌 Heroku Userbot Host for Magisk
-
 <p align="center">
   <a href="https://github.com/DmitryLegend/heroku-module/releases/tag/latest">
     <img src="https://img.shields.io/badge/DOWNLOAD-LATEST_RELEASE-9d4edd?style=for-the-badge&logo=github&logoColor=white">
   </a>
-</p>
-
-<p align="center">
+ align="center">
   <img src="https://img.shields.io/badge/Platform-Android%20%7C%20Magisk-7b2cbf?style=for-the-badge&logo=android&logoColor=white">
   <img src="https://img.shields.io/badge/Environment-Alpine%20Linux-5a189a?style=for-the-badge&logo=alpine-linux&logoColor=white">
   <img src="https://img.shields.io/badge/Core-Python%203.x-3c096c?style=for-the-badge&logo=python&logoColor=white">
